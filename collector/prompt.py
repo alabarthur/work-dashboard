@@ -44,9 +44,11 @@ def teams_prompt(rules: dict[str, Any]) -> str:
         "@mentions and direct/1:1 messages that are awaiting your reply. "
         'For each, emit a normalized item with source="teams", type="mention" or "dm". '
         "Requirements for each item:\n"
-        '- title MUST identify the conversation as "<sender name> in <chat/channel name>" '
-        "(use the channel/team name for channel mentions, the group-chat name for group chats, "
-        'or the person\'s name for a 1:1 DM). Never use a vague title like "follow-up in same chat".\n'
+        "- title: identify the conversation in HUMAN terms and NEVER put a raw chat id or GUID "
+        "in it. Use the channel/team name for a channel mention; for a 1:1 use the sender's name; "
+        "for a group chat (these are usually unnamed) use the chat's name if it has one, otherwise "
+        '"<sender> in group chat — <first ~6 words of the message>". '
+        "Keep it short and meaningful.\n"
         '- url MUST be the message\'s clickable web permalink (webUrl) so the user can open the '
         "chat; if no message link is available, use the chat/channel link. Do not leave url null.\n"
         '- snippet = the message text preview. Put the sender in "from".\n'
