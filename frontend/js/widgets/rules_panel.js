@@ -109,6 +109,10 @@ function build() {
       <label class="field-label" style="margin-top:12px">Timezone</label>
       <input type="text" data-path="workday.timezone" value="${escapeHtml(getPath(rules, "workday.timezone"))}"/>
       ${slider("Refresh interval (min)", "refresh.interval_minutes", 1, 60, 1)}
+      <label class="src-check" style="margin-top:10px">
+        <input type="checkbox" data-path="refresh.only_during_workday" ${getPath(rules, "refresh.only_during_workday") !== false ? "checked" : ""}/>
+        Only auto-collect during workday hours
+      </label>
     </div>
 
     <div class="rules-group">

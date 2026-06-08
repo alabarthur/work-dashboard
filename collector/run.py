@@ -8,12 +8,11 @@ run — used both for manual refreshes and by the launchd scheduler.
 from __future__ import annotations
 
 import argparse
+import json
 import sys
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any
 from zoneinfo import ZoneInfo
-
-import json
 
 from app import config, services
 from app.rules_store import load_rules
@@ -82,6 +81,25 @@ def _within_workday(rules: dict[str, Any]) -> bool:
     return start <= now.strftime("%H:%M") <= end
 
 
+def _interval_elapsed(rules: dict[str, Any]) -> bool:
+    """True if at least refresh.interval_minutes have passed since the last run.
+
+    Lets the rules' interval control the real cadence: launchd ticks frequently
+    and scheduled runs skip until the configured interval has elapsed.
+    """
+    interval = float(rules.get("refresh", {}).get("interval_minutes", 15))
+    if not config.STATUS_PATH.exists():
+        return True
+    try:
+        last = json.loads(config.STATUS_PATH.read_text()).get("last_run_finished")
+        if not last:
+            return True
+        elapsed_min = (datetime.now(timezone.utc) - datetime.fromisoformat(last)).total_seconds() / 60
+        return elapsed_min >= interval
+    except (ValueError, OSError):
+        return True
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="work-table data collector")
     parser.add_argument("--trigger", default="manual", choices=["manual", "scheduled"])
@@ -89,13 +107,13 @@ def main() -> int:
 
     wire()
     rules = load_rules()
-    if (
-        args.trigger == "scheduled"
-        and rules.get("refresh", {}).get("only_during_workday", True)
-        and not _within_workday(rules)
-    ):
-        print("outside workday; skipping scheduled collection")
-        return 0
+    if args.trigger == "scheduled":
+        if rules.get("refresh", {}).get("only_during_workday", True) and not _within_workday(rules):
+            print("outside workday; skipping scheduled collection")
+            return 0
+        if not _interval_elapsed(rules):
+            print("refresh interval not elapsed; skipping scheduled collection")
+            return 0
 
     result = services.refresh(trigger=args.trigger)
     status = result.get("status")

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 
 from app import config
@@ -23,6 +23,17 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="work-table", version="0.1.0", lifespan=lifespan)
+
+
+@app.middleware("http")
+async def no_cache(request: Request, call_next):
+    # Force browsers to revalidate JS/CSS/HTML on every load so a plain reload
+    # always picks up the latest assets (no stale-tab surprises).
+    response = await call_next(request)
+    response.headers["Cache-Control"] = "no-cache"
+    return response
+
+
 app.include_router(api_router)
 
 # Serve the frontend at the root. html=True makes "/" return index.html.

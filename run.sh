@@ -8,4 +8,7 @@ PY=".venv/bin/python"
 [ -x "$PY" ] || PY="python3"
 
 echo "Work Table → http://localhost:${PORT}"
-exec "$PY" -m uvicorn app.main:app --port "$PORT" --host 127.0.0.1
+# --reload auto-restarts on backend code changes. Only watch source dirs (not
+# data/, which the collector writes to) so collections don't trigger reloads.
+exec "$PY" -m uvicorn app.main:app --port "$PORT" --host 127.0.0.1 \
+    --reload --reload-dir app --reload-dir collector --reload-dir scoring

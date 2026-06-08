@@ -1,6 +1,7 @@
 """Collector parsing/validation and lock behavior — with a fake claude runner."""
 
 import json
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import pytest
@@ -213,6 +214,21 @@ def test_refresh_collector_failure_keeps_last_good(temp_data, monkeypatch):
     assert config.DATA_PATH.read_text() == good
     status = json.loads(config.STATUS_PATH.read_text())
     assert status["ok"] is False
+
+
+def test_interval_gate(temp_data):
+    from collector import run
+    rules = {"refresh": {"interval_minutes": 15}}
+    # No status yet → allowed to run.
+    assert run._interval_elapsed(rules) is True
+    # A run that finished 2 minutes ago → blocked (interval 15).
+    recent = (datetime.now(timezone.utc) - timedelta(minutes=2)).isoformat()
+    config.STATUS_PATH.write_text(json.dumps({"last_run_finished": recent}))
+    assert run._interval_elapsed(rules) is False
+    # Finished 20 minutes ago → allowed.
+    old = (datetime.now(timezone.utc) - timedelta(minutes=20)).isoformat()
+    config.STATUS_PATH.write_text(json.dumps({"last_run_finished": old}))
+    assert run._interval_elapsed(rules) is True
 
 
 def test_refresh_already_running(temp_data):

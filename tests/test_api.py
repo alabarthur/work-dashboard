@@ -114,3 +114,8 @@ def test_health_and_status(temp_data):
     assert h["running"] is False
     s = client.get("/api/status").json()
     assert s["ok"] is True
+
+
+def test_static_responses_are_no_cache(temp_data):
+    r = client.get("/api/data")
+    assert r.headers.get("cache-control") == "no-cache"
