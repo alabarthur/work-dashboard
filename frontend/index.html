@@ -55,14 +55,16 @@
 
     <!-- HERO: ranked Do Now list -->
     <section class="panel panel--donow" id="panel-donow">
-      <div class="panel-head">
-        <h2 class="panel-title" id="donow-title">Do&nbsp;now <span id="donow-count" class="count"></span></h2>
-        <div class="seg" id="donow-toggle" role="tablist">
-          <button class="seg-btn is-active" data-mode="now">Do&nbsp;Now</button>
-          <button class="seg-btn" data-mode="all">All</button>
+      <div class="donow-inner">
+        <div class="panel-head">
+          <h2 class="panel-title" id="donow-title">Do&nbsp;now <span id="donow-count" class="count"></span></h2>
+          <div class="seg" id="donow-toggle" role="tablist">
+            <button class="seg-btn is-active" data-mode="now">Do&nbsp;Now</button>
+            <button class="seg-btn" data-mode="all">All</button>
+          </div>
         </div>
+        <ol id="donow" class="donow"></ol>
       </div>
-      <ol id="donow" class="donow"></ol>
     </section>
 
     <!-- Meeting timeline -->

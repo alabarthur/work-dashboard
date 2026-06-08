@@ -215,7 +215,10 @@ html, body {
   align-items: start;
 }
 .panel--gauge { grid-area: gauge; }
-.panel--donow { grid-area: donow; align-self: stretch; display: flex; flex-direction: column; }
+/* Donow stretches to the left column's height; its inner content is absolutely
+   positioned so it doesn't inflate the grid rows — the list scrolls instead. */
+.panel--donow { grid-area: donow; align-self: stretch; position: relative; padding: 0; overflow: hidden; min-height: 420px; }
+.donow-inner { position: absolute; inset: 0; display: flex; flex-direction: column; padding: 22px 24px 26px; }
 .panel--timeline { grid-area: timeline; }
 .panel--breakdown { grid-area: breakdown; }
 
