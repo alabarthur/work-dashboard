@@ -1,0 +1,37 @@
+{
+  "version": 1,
+  "workday": { "start": "09:00", "end": "18:00", "timezone": "Europe/Prague" },
+  "refresh": { "interval_minutes": 15, "only_during_workday": true },
+  "base_score": 25,
+  "source_weights": {
+    "teams": 1.3,
+    "outlook_email": 0.9,
+    "calendar": 1.2,
+    "notion": 1.0
+  },
+  "vip_people": [
+    { "match": "jane.manager@company.com", "boost": 20 }
+  ],
+  "keywords": [
+    { "match": "urgent", "boost": 15 },
+    { "match": "blocker", "boost": 20 }
+  ],
+  "notion_tag_boosts": [
+    { "tag": "P0", "boost": 25 },
+    { "tag": "P1", "boost": 12 },
+    { "tag": "P2", "boost": 4 }
+  ],
+  "notion_dependency_boost": 10,
+  "due_date_urgency": {
+    "overdue": 40,
+    "due_today": 25,
+    "due_tomorrow": 10,
+    "decay_days": 7
+  },
+  "meeting_imminence": { "lead_minutes": 15, "max_boost": 50 },
+  "tiers": { "now": 70, "soon": 40 },
+  "do_now_limit": 12,
+  "manual_step": 10,
+  "notion": { "data_source_url": null, "due_property": "Due", "tags_property": "Tags" },
+  "reconnect_url": "https://claude.ai/settings/connectors"
+}

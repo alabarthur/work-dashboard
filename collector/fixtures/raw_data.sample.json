@@ -1,0 +1,147 @@
+{
+  "collected_at": "2026-06-08T13:05:00+02:00",
+  "sources": {
+    "teams": { "ok": true, "error": null },
+    "calendar": { "ok": true, "error": null },
+    "email": { "ok": true, "error": null },
+    "notion": { "ok": true, "error": null }
+  },
+  "items": [
+    {
+      "id": "teams:msg:AAQk001",
+      "source": "teams",
+      "type": "mention",
+      "title": "Jane mentioned you in #release",
+      "snippet": "can you review the blocker before standup?",
+      "from": { "name": "Jane Manager", "email": "jane.manager@company.com" },
+      "url": "https://teams.microsoft.com/l/message/aaqk001",
+      "created_at": "2026-06-08T12:40:00+02:00",
+      "due_at": null,
+      "tags": [],
+      "has_dependency": false,
+      "meeting": null
+    },
+    {
+      "id": "teams:dm:AAQk002",
+      "source": "teams",
+      "type": "dm",
+      "title": "DM from Bob Coworker",
+      "snippet": "ping when you get a sec, nothing urgent",
+      "from": { "name": "Bob Coworker", "email": "bob@company.com" },
+      "url": "https://teams.microsoft.com/l/message/aaqk002",
+      "created_at": "2026-06-08T11:15:00+02:00",
+      "due_at": null,
+      "tags": [],
+      "has_dependency": false,
+      "meeting": null
+    },
+    {
+      "id": "outlook:mail:AAMk010",
+      "source": "outlook_email",
+      "type": "email",
+      "title": "RE: Q3 budget sign-off needed",
+      "snippet": "Need your approval today, this is urgent for the board deck.",
+      "from": { "name": "Jane Manager", "email": "jane.manager@company.com" },
+      "url": "https://outlook.office.com/mail/id/aamk010",
+      "created_at": "2026-06-08T09:30:00+02:00",
+      "due_at": null,
+      "tags": [],
+      "has_dependency": false,
+      "meeting": null
+    },
+    {
+      "id": "outlook:mail:AAMk011",
+      "source": "outlook_email",
+      "type": "email",
+      "title": "Newsletter: this week in tech",
+      "snippet": "Top stories you might have missed",
+      "from": { "name": "Tech Digest", "email": "news@digest.example" },
+      "url": "https://outlook.office.com/mail/id/aamk011",
+      "created_at": "2026-06-08T07:00:00+02:00",
+      "due_at": null,
+      "tags": [],
+      "has_dependency": false,
+      "meeting": null
+    },
+    {
+      "id": "cal:event:AAMk100",
+      "source": "calendar",
+      "type": "meeting",
+      "title": "Release sync",
+      "snippet": null,
+      "from": { "name": "Release Bot", "email": "release@company.com" },
+      "url": "https://outlook.office.com/calendar/item/aamk100",
+      "created_at": null,
+      "due_at": null,
+      "tags": [],
+      "has_dependency": false,
+      "meeting": {
+        "start": "2026-06-08T13:15:00+02:00",
+        "end": "2026-06-08T13:45:00+02:00",
+        "is_organizer": false,
+        "response": "accepted"
+      }
+    },
+    {
+      "id": "cal:event:AAMk101",
+      "source": "calendar",
+      "type": "meeting",
+      "title": "1:1 with manager",
+      "snippet": null,
+      "from": { "name": "Jane Manager", "email": "jane.manager@company.com" },
+      "url": "https://outlook.office.com/calendar/item/aamk101",
+      "created_at": null,
+      "due_at": null,
+      "tags": [],
+      "has_dependency": false,
+      "meeting": {
+        "start": "2026-06-08T16:00:00+02:00",
+        "end": "2026-06-08T16:30:00+02:00",
+        "is_organizer": false,
+        "response": "accepted"
+      }
+    },
+    {
+      "id": "notion:task:abc100",
+      "source": "notion",
+      "type": "task",
+      "title": "Finish QA report",
+      "snippet": "Summarize the regression run results",
+      "from": { "name": null, "email": null },
+      "url": "https://notion.so/abc100",
+      "created_at": "2026-06-05T10:00:00+02:00",
+      "due_at": "2026-06-08T18:00:00+02:00",
+      "tags": ["P0"],
+      "has_dependency": true,
+      "meeting": null
+    },
+    {
+      "id": "notion:task:abc101",
+      "source": "notion",
+      "type": "task",
+      "title": "Update onboarding doc",
+      "snippet": null,
+      "from": { "name": null, "email": null },
+      "url": "https://notion.so/abc101",
+      "created_at": "2026-06-01T10:00:00+02:00",
+      "due_at": "2026-06-06T18:00:00+02:00",
+      "tags": ["P2"],
+      "has_dependency": false,
+      "meeting": null
+    },
+    {
+      "id": "notion:task:abc102",
+      "source": "notion",
+      "type": "task",
+      "title": "Plan next sprint",
+      "snippet": null,
+      "from": { "name": null, "email": null },
+      "url": "https://notion.so/abc102",
+      "created_at": "2026-06-07T10:00:00+02:00",
+      "due_at": "2026-06-12T18:00:00+02:00",
+      "tags": ["P1"],
+      "has_dependency": false,
+      "meeting": null
+    }
+  ]
+}

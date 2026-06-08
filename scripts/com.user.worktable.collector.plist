@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.user.worktable.collector</string>
+
+    <!-- Run the collector every 15 minutes. The collector self-gates on the
+         workday window from rules.json, so off-hours ticks exit immediately. -->
+    <key>StartInterval</key>
+    <integer>900</integer>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>__PROJECT__/.venv/bin/python</string>
+        <string>-m</string>
+        <string>collector.run</string>
+        <string>--trigger</string>
+        <string>scheduled</string>
+    </array>
+
+    <key>WorkingDirectory</key>
+    <string>__PROJECT__</string>
+
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>HOME</key>
+        <string>__HOME__</string>
+        <key>PATH</key>
+        <string>/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+        <key>WORKTABLE_CLAUDE_BIN</key>
+        <string>/opt/homebrew/bin/claude</string>
+    </dict>
+
+    <key>StandardOutPath</key>
+    <string>__PROJECT__/data/collector.out.log</string>
+    <key>StandardErrorPath</key>
+    <string>__PROJECT__/data/collector.err.log</string>
+
+    <key>RunAtLoad</key>
+    <true/>
+</dict>
+</plist>

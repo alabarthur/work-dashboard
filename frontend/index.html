@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Work Table — what to do now</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,500;1,9..144,600&family=Archivo:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap"
+    rel="stylesheet"
+  />
+  <link rel="stylesheet" href="/css/styles.css" />
+</head>
+<body>
+  <div class="grain" aria-hidden="true"></div>
+
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-mark">◴</span>
+      <h1>Work&nbsp;Table</h1>
+      <span class="brand-sub">what to do <em>now</em></span>
+    </div>
+    <div class="topbar-right">
+      <div class="clock">
+        <span id="clock-time" class="clock-time">--:--</span>
+        <span id="clock-date" class="clock-date"></span>
+      </div>
+      <div id="staleness" class="badge badge--unknown" title="data freshness">
+        <span class="badge-dot"></span><span id="staleness-text">…</span>
+      </div>
+      <button id="refresh-btn" class="btn" title="Collect fresh data now">
+        <span class="btn-icon">⟳</span> Refresh
+      </button>
+      <button id="rules-btn" class="btn btn--ghost" title="Edit prioritization rules">Rules</button>
+    </div>
+  </header>
+
+  <div id="auth-banner" class="banner" hidden>
+    <span class="banner-icon">⚠</span>
+    <div class="banner-body">
+      <strong id="banner-title">A connector needs re-authentication.</strong>
+      <span id="banner-detail" class="banner-detail"></span>
+    </div>
+    <a id="banner-link" class="btn" href="#" target="_blank" rel="noopener">Reconnect →</a>
+    <button id="banner-retry" class="btn btn--ghost">Retry now</button>
+  </div>
+
+  <main class="grid">
+    <!-- HERO: workday gauge -->
+    <section class="panel panel--gauge" id="panel-gauge">
+      <h2 class="panel-title">The day</h2>
+      <div id="gauge" class="gauge"></div>
+    </section>
+
+    <!-- HERO: ranked Do Now list -->
+    <section class="panel panel--donow" id="panel-donow">
+      <div class="panel-head">
+        <h2 class="panel-title" id="donow-title">Do&nbsp;now <span id="donow-count" class="count"></span></h2>
+        <div class="seg" id="donow-toggle" role="tablist">
+          <button class="seg-btn is-active" data-mode="now">Do&nbsp;Now</button>
+          <button class="seg-btn" data-mode="all">All</button>
+        </div>
+      </div>
+      <ol id="donow" class="donow"></ol>
+    </section>
+
+    <!-- Meeting timeline -->
+    <section class="panel panel--timeline" id="panel-timeline">
+      <h2 class="panel-title">Today's schedule</h2>
+      <div id="timeline" class="timeline"></div>
+    </section>
+
+    <!-- Breakdown charts -->
+    <section class="panel panel--breakdown" id="panel-breakdown">
+      <h2 class="panel-title">Workload</h2>
+      <div id="breakdown" class="breakdown"></div>
+    </section>
+  </main>
+
+  <!-- Rules drawer -->
+  <div id="rules-overlay" class="overlay" hidden></div>
+  <aside id="rules-panel" class="drawer" aria-hidden="true">
+    <div class="drawer-head">
+      <h2>Prioritization rules</h2>
+      <button id="rules-close" class="btn btn--ghost">Close</button>
+    </div>
+    <div id="rules-body" class="drawer-body"></div>
+    <div class="drawer-foot">
+      <span id="rules-msg" class="rules-msg"></span>
+      <button id="rules-save" class="btn">Save &amp; re-rank</button>
+    </div>
+  </aside>
+
+  <script type="module" src="/js/app.js"></script>
+</body>
+</html>

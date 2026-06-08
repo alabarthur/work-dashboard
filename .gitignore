@@ -1,0 +1,14 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# Runtime state — contains personal data (emails, meetings, tasks, overrides).
+# Never commit. The app recreates this directory on startup.
+data/
+
+# Logs
+*.log
+
+# macOS
+.DS_Store

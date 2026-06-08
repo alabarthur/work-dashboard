@@ -1,0 +1,44 @@
+{
+  "collected_at": "2026-06-08T13:05:00+02:00",
+  "sources": {
+    "teams": { "ok": true, "error": null },
+    "calendar": { "ok": true, "error": null },
+    "email": { "ok": false, "error": "timeout" },
+    "notion": { "ok": false, "error": "auth_required" }
+  },
+  "items": [
+    {
+      "id": "teams:msg:AAQk001",
+      "source": "teams",
+      "type": "mention",
+      "title": "Jane mentioned you in #release",
+      "snippet": "can you review the blocker before standup?",
+      "from": { "name": "Jane Manager", "email": "jane.manager@company.com" },
+      "url": "https://teams.microsoft.com/l/message/aaqk001",
+      "created_at": "2026-06-08T12:40:00+02:00",
+      "due_at": null,
+      "tags": [],
+      "has_dependency": false,
+      "meeting": null
+    },
+    {
+      "id": "cal:event:AAMk100",
+      "source": "calendar",
+      "type": "meeting",
+      "title": "Release sync",
+      "snippet": null,
+      "from": { "name": "Release Bot", "email": "release@company.com" },
+      "url": "https://outlook.office.com/calendar/item/aamk100",
+      "created_at": null,
+      "due_at": null,
+      "tags": [],
+      "has_dependency": false,
+      "meeting": {
+        "start": "2026-06-08T13:15:00+02:00",
+        "end": "2026-06-08T13:45:00+02:00",
+        "is_organizer": false,
+        "response": "accepted"
+      }
+    }
+  ]
+}
