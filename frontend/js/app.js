@@ -9,7 +9,7 @@ import * as rulesPanel from "./widgets/rules_panel.js";
 
 const POLL_MS = 60_000;
 const DEFAULT_RECONNECT_URL = "https://claude.ai/settings/connectors";
-const CONNECTOR = { calendar: "Microsoft 365", email: "Microsoft 365", teams: "Microsoft 365", notion: "Notion" };
+const CONNECTOR = { calendar: "Microsoft 365", email: "Microsoft 365", teams: "Microsoft 365", notion: "Notion", tfs: "TFS" };
 let latest = null;
 let currentRules = null;
 let donowMode = "now"; // "now" (top-N) | "all" (full ranked, grouped)
@@ -221,6 +221,9 @@ async function init() {
   setInterval(tickClock, 1000);
   setInterval(loadData, POLL_MS);
   await Promise.allSettled([loadData(), loadRules()]);
+  if (new URLSearchParams(location.search).get("rules") === "open" && currentRules) {
+    rulesPanel.open(currentRules, saveRules);
+  }
 }
 
 init();

@@ -1,6 +1,6 @@
 // Workload breakdown: items by source, by priority tier, and task due/overdue stats.
 
-const SRC_LABEL = { teams: "Teams", outlook_email: "Email", calendar: "Calendar", notion: "Notion" };
+const SRC_LABEL = { teams: "Teams", outlook_email: "Email", calendar: "Calendar", notion: "Notion", tfs: "TFS" };
 const TIER_COLOR = { now: "var(--tier-now)", soon: "var(--tier-soon)", later: "var(--tier-later)" };
 
 function bars(entries, max, colorFor) {

@@ -24,6 +24,8 @@ def _items_for(key):
 
 
 def _key_for_tools(allowed_tools):
+    if "tfs-mcp" in allowed_tools:
+        return "tfs"
     if "notion" in allowed_tools:
         return "notion"
     if "chat_message" in allowed_tools:
@@ -69,9 +71,41 @@ def _fake_runner(prompt, allowed_tools, mcp_config=None, strict=False, timeout=0
 def test_collect_all_assembles_validatable_raw():
     raw = sources.collect_all(DEFAULT_RULES, runner=_fake_runner)
     claude_runner.validate_raw(raw)  # must not raise
-    assert set(raw["sources"]) == {"teams", "calendar", "email", "notion"}
+    assert set(raw["sources"]) == {"teams", "calendar", "email", "notion", "tfs"}
     assert raw["sources"]["calendar"]["ok"] is True
+    # tfs has no queries in defaults → skipped (ok, no run), so SAMPLE count holds
     assert len(raw["items"]) == len(SAMPLE["items"])
+
+
+def test_tfs_skipped_without_queries_runs_with_queries():
+    calls = []
+
+    def runner(prompt, allowed_tools, mcp_config=None, strict=False, timeout=0):
+        calls.append(_key_for_tools(allowed_tools))
+        return _envelope({"ok": True, "items": []})
+
+    # No queries → tfs never invoked.
+    sources.collect_all(DEFAULT_RULES, runner=runner)
+    assert "tfs" not in calls
+
+    # With a query link → tfs is collected.
+    calls.clear()
+    rules = {**DEFAULT_RULES, "tfs": {"queries": ["https://tfs/_queries/query/abc/"], "project": "X"}}
+    sources.collect_all(rules, runner=runner)
+    assert "tfs" in calls
+
+
+def test_disabled_source_is_skipped():
+    calls = []
+
+    def runner(prompt, allowed_tools, mcp_config=None, strict=False, timeout=0):
+        calls.append(_key_for_tools(allowed_tools))
+        return _envelope({"ok": True, "items": []})
+
+    rules = {**DEFAULT_RULES, "sources_enabled": {"teams": False, "calendar": True, "email": True, "notion": True, "tfs": True}}
+    raw = sources.collect_all(rules, runner=runner)
+    assert "teams" not in calls          # toggled off → not invoked
+    assert raw["sources"]["teams"] == {"ok": True, "error": None}
 
 
 def test_failing_source_degrades_independently():

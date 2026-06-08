@@ -32,6 +32,11 @@ def test_teams_id():
     assert canonical_id({"source": "teams", "id": "teams:msg:AAQk001"}) == "teams:AAQk001"
 
 
+def test_tfs_id():
+    assert canonical_id({"source": "tfs", "id": "tfs:12345"}) == "tfs:12345"
+    assert canonical_id({"source": "tfs", "id": "12345"}) == "tfs:12345"
+
+
 def test_missing_id_falls_back_to_url_hash_and_is_stable():
     item = {"source": "calendar", "id": None, "url": "https://x/evt/123", "title": "Sync"}
     a = canonical_id(item)

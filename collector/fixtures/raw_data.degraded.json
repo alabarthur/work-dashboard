@@ -4,7 +4,8 @@
     "teams": { "ok": true, "error": null },
     "calendar": { "ok": true, "error": null },
     "email": { "ok": false, "error": "timeout" },
-    "notion": { "ok": false, "error": "auth_required" }
+    "notion": { "ok": false, "error": "auth_required" },
+    "tfs": { "ok": true, "error": null }
   },
   "items": [
     {

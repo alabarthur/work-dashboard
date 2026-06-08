@@ -2,12 +2,14 @@
   "version": 1,
   "workday": { "start": "09:00", "end": "18:00", "timezone": "Europe/Prague" },
   "refresh": { "interval_minutes": 15, "only_during_workday": true },
+  "sources_enabled": { "teams": true, "calendar": true, "email": true, "notion": true, "tfs": true },
   "base_score": 25,
   "source_weights": {
     "teams": 1.3,
     "outlook_email": 0.9,
     "calendar": 1.2,
-    "notion": 1.0
+    "notion": 1.0,
+    "tfs": 1.0
   },
   "vip_people": [
     { "match": "jane.manager@company.com", "boost": 20 }
@@ -33,5 +35,7 @@
   "do_now_limit": 12,
   "manual_step": 10,
   "notion": { "data_source_url": null, "due_property": "Due", "tags_property": "Tags" },
+  "tfs": { "queries": [], "project": null },
+  "mail": { "folders": [] },
   "reconnect_url": "https://claude.ai/settings/connectors"
 }

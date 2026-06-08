@@ -169,6 +169,63 @@ def test_past_meetings_excluded(rules):
     assert {m["title"] for m in result["meetings"]} == {"In progress", "Later sync"}
 
 
+def test_thread_dedup_keeps_highest(rules):
+    raw = {
+        "collected_at": "2026-06-08T13:00:00+02:00",
+        "sources": {k: {"ok": True, "error": None} for k in ("teams", "calendar", "email", "notion", "tfs")},
+        "items": [
+            {"id": "t-low", "source": "teams", "type": "dm", "title": "ok thanks",
+             "thread_id": "chat1", "from": {"name": "Bob"}, "tags": [], "has_dependency": False},
+            {"id": "t-high", "source": "teams", "type": "mention", "title": "urgent blocker please",
+             "thread_id": "chat1", "from": {"email": "jane.manager@company.com"}, "tags": [], "has_dependency": False},
+            {"id": "t-other", "source": "teams", "type": "dm", "title": "different chat",
+             "thread_id": "chat2", "from": {"name": "Sue"}, "tags": [], "has_dependency": False},
+            {"id": "m-a", "source": "outlook_email", "type": "email", "title": "re: spec",
+             "thread_id": "thread-x", "from": {"name": "A"}, "tags": [], "has_dependency": False},
+            {"id": "m-b", "source": "outlook_email", "type": "email", "title": "re: spec urgent",
+             "thread_id": "thread-x", "from": {"name": "A"}, "tags": [], "has_dependency": False},
+        ],
+    }
+    ids = [r["id"] for r in engine.score(raw, rules, now=NOW)["ranked"]]
+    assert "t-high" in ids and "t-low" not in ids   # one per chat (the top)
+    assert "t-other" in ids                          # different chat survives
+    assert ids.count("m-a") + ids.count("m-b") == 1   # one per email thread
+    assert "m-b" in ids                               # the "urgent" one wins
+
+
+def test_items_without_thread_id_not_deduped(raw, rules):
+    # Notion tasks have no thread_id — none should be collapsed.
+    result = engine.score(raw, rules, now=NOW)
+    notion_ids = [r["id"] for r in result["ranked"] if r["source"] == "notion"]
+    assert len(notion_ids) == 3
+
+
+def test_tfs_item_scores_base_only(rules):
+    raw = {
+        "collected_at": "2026-06-08T13:00:00+02:00",
+        "sources": {k: {"ok": True, "error": None} for k in ("teams", "calendar", "email", "notion", "tfs")},
+        "items": [
+            {"id": "tfs:12345", "source": "tfs", "type": "task", "title": "Fix login bug",
+             "snippet": "Bug · Active", "from": {"name": "Me", "email": None},
+             "url": "https://tfs/_workitems/edit/12345", "due_at": None,
+             "tags": ["Bug", "Active"], "has_dependency": False},
+        ],
+    }
+    item = _by_id(engine.score(raw, rules, now=NOW))["tfs:12345"]
+    # base only: 25 * source_weights.tfs (1.0) = 25, no urgency (due_at null)
+    assert item["factors"]["base"] == 25.0
+    assert item["factors"]["urgency"] == 0
+    assert item["score"] == 25.0
+
+
+def test_disabled_source_filtered_out(raw, rules):
+    rules["sources_enabled"] = {"teams": False, "calendar": True, "email": True, "notion": True, "tfs": True}
+    result = engine.score(raw, rules, now=NOW)
+    assert all(r["source"] != "teams" for r in result["ranked"])
+    # other sources still present
+    assert any(r["source"] == "notion" for r in result["ranked"])
+
+
 def test_teams_default_weight_bumped(raw, rules):
     scored = _by_id(engine.score(raw, rules, now=NOW))
     # default teams weight is 1.3 → base 25 * 1.3 = 32.5

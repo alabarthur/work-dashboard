@@ -25,11 +25,13 @@ M365 = "mcp__claude_ai_Microsoft_365__"
 
 @dataclass(frozen=True)
 class SourceSpec:
-    key: str  # health key: teams | calendar | email | notion
+    key: str  # health key: teams | calendar | email | notion | tfs
     build_prompt: Callable[[dict[str, Any]], str]
     allowed_tools: str
     strict: bool = False
     mcp_config: Optional[str] = None
+    # Optional predicate; when it returns False the source is skipped (no run).
+    enabled: Optional[Callable[[dict[str, Any]], bool]] = None
 
 
 def _notion_config() -> str:
@@ -48,6 +50,12 @@ SPECS: list[SourceSpec] = [
         "mcp__notion__*",
         strict=True,
         mcp_config=_notion_config(),
+    ),
+    SourceSpec(
+        "tfs",
+        prompt.tfs_prompt,
+        "mcp__tfs-mcp__*",
+        enabled=lambda rules: bool(rules.get("tfs", {}).get("queries")),
     ),
 ]
 
@@ -96,8 +104,18 @@ def collect_all(
     sources: dict[str, Any] = {}
     items: list[dict[str, Any]] = []
 
-    with ThreadPoolExecutor(max_workers=len(SPECS)) as pool:
-        futures = {pool.submit(collect_source, spec, rules, runner): spec for spec in SPECS}
+    enabled_map = rules.get("sources_enabled") or {}
+    active = []
+    for spec in SPECS:
+        toggled_off = not enabled_map.get(spec.key, True)
+        predicate_off = spec.enabled is not None and not spec.enabled(rules)
+        if toggled_off or predicate_off:
+            sources[spec.key] = {"ok": True, "error": None}  # off / nothing to fetch
+        else:
+            active.append(spec)
+
+    with ThreadPoolExecutor(max_workers=max(1, len(active))) as pool:
+        futures = {pool.submit(collect_source, spec, rules, runner): spec for spec in active}
         for fut in as_completed(futures):
             spec = futures[fut]
             health, src_items = fut.result()

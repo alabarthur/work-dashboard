@@ -14,7 +14,7 @@ from zoneinfo import ZoneInfo
 
 # The normalized item shape every source must emit.
 ITEM_SHAPE = (
-    '{"id","source","type","title","snippet","from":{"name","email"},"url",'
+    '{"id","source","type","title","snippet","thread_id","from":{"name","email"},"url",'
     '"created_at","due_at","tags":[],"has_dependency":bool,'
     '"meeting":null|{"start","end","is_organizer","response"}}'
 )
@@ -50,6 +50,7 @@ def teams_prompt(rules: dict[str, Any]) -> str:
         '- url MUST be the message\'s clickable web permalink (webUrl) so the user can open the '
         "chat; if no message link is available, use the chat/channel link. Do not leave url null.\n"
         '- snippet = the message text preview. Put the sender in "from".\n'
+        '- thread_id = the chat/conversation id, so messages from the SAME chat share it.\n'
         f"Normalized item shape: {ITEM_SHAPE}. {_RULES}"
     )
 
@@ -67,27 +68,79 @@ def calendar_prompt(rules: dict[str, Any]) -> str:
 
 
 def email_prompt(rules: dict[str, Any]) -> str:
+    folders = rules.get("mail", {}).get("folders", [])
+    if folders:
+        folder_list = ", ".join(f'"{f}"' for f in folders)
+        scope = (
+            "Search ONLY these specific mail folders (non-recursively) — make a SEPARATE "
+            f"outlook_email_search call for each, passing folderName: {folder_list}. "
+            "For each folder use order='newest', limit=15. Do NOT search any other folder."
+        )
+    else:
+        scope = (
+            "Use outlook_email_search to get up to 10 recent emails from the mailbox."
+        )
     return (
-        f"It is {now_iso(rules)}. Using the Microsoft 365 connector tool "
-        "outlook_email_search, get up to 10 recent unread/flagged emails where you are a "
-        'direct recipient and that plausibly need a reply. source="outlook_email", type="email". '
+        f"It is {now_iso(rules)}. Using the Microsoft 365 connector, {scope} "
+        "From the results, include emails that plausibly need a reply (recent, unread or flagged, "
+        'where you are a direct recipient). source="outlook_email", type="email". '
+        "Set thread_id = the email conversationId/thread id, so messages in the SAME thread share it. "
+        f"Shape: {ITEM_SHAPE}. {_RULES}"
+    )
+
+
+def tfs_prompt(rules: dict[str, Any]) -> str:
+    tfs = rules.get("tfs", {})
+    queries = tfs.get("queries", [])
+    project_default = tfs.get("project")
+    query_lines = "\n".join(f"  - {q}" for q in queries)
+    proj_hint = (
+        f"If a link does not contain a project, use project '{project_default}'."
+        if project_default
+        else "If a link does not contain a project, skip it."
+    )
+    return (
+        f"It is {now_iso(rules)}. Using the tfs-mcp connector, collect work items from these "
+        "saved TFS/Azure DevOps queries. For EACH link, extract the query GUID and the project "
+        "from the URL (these URLs contain '/<project>/_queries/query/<guid>/'). "
+        f"{proj_hint}\n"
+        "Steps per query: call get_query_results(query_id=<guid>, project=<project>, limit=30) to "
+        "get work item ids, then get_work_items_batch(ids, project, expand='Relations') for details. "
+        "Queries:\n"
+        f"{query_lines}\n"
+        'Normalize each work item: source="tfs", type="task", id="tfs:<work item id>", '
+        'title=the work item title, snippet="<Work Item Type> · <State>", '
+        'from = the AssignedTo person, url = the work item web URL, due_at = null, '
+        "tags = [the Work Item Type, the State, plus any tags], "
+        "has_dependency = true if it has child/related/predecessor links. "
+        "Skip removed/closed-done items if obvious. Cap at ~30 items total across all queries. "
         f"Shape: {ITEM_SHAPE}. {_RULES}"
     )
 
 
 def notion_prompt(rules: dict[str, Any]) -> str:
     notion = rules.get("notion", {})
-    if notion.get("data_source_url"):
-        where = (
-            f"Open the Notion data source {notion['data_source_url']} and read open tasks. "
-            f"Treat the '{notion.get('due_property', 'Due')}' property as due_at and "
-            f"'{notion.get('tags_property', 'Tags')}' as tags."
-        )
+    due_prop = notion.get("due_property", "Due")
+    tags_prop = notion.get("tags_property", "Tags")
+    url = notion.get("data_source_url")
+    if url:
+        find = f"call notion-fetch with id='{url}'"
     else:
-        where = "Use notion-search to find the user's task database, then read open tasks with due dates."
+        find = "use notion-search to find the user's tasks database, then notion-fetch it"
+
     return (
-        f"It is {now_iso(rules)}. {where} Emit up to 20 open tasks as normalized items with "
-        'source="notion", type="task", due_at from the due property, tags from tags/status, and '
-        "has_dependency=true if the task has blocking/dependency relations. "
+        f"It is {now_iso(rules)}. Enumerate the user's open Notion tasks using this exact method:\n"
+        f"1. {find}. The result is a database — read its data source id from the "
+        '<data-source url="collection://..."> tag.\n'
+        "2. Call notion-search with data_source_url set to that collection:// id, "
+        'query="open active task to do", page_size=25, max_highlight_length=0. This lists the '
+        "task pages in that database.\n"
+        "3. If a returned task's fields aren't in the results, notion-fetch it for details.\n"
+        "Include ALL returned tasks whose Status is NOT Done / Completed / Archived / Cancelled. "
+        "Do NOT filter by date.\n"
+        'For each, emit a normalized item: source="notion", type="task", '
+        f"title = the task name, due_at = the '{due_prop}' property if it has one else null, "
+        f"tags = the '{tags_prop}' property plus the Status, "
+        "has_dependency = true if it has Blocking/Blocked-by relations, url = the page URL. "
         f"Shape: {ITEM_SHAPE}. {_RULES}"
     )

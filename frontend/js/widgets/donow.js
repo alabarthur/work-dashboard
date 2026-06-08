@@ -7,6 +7,7 @@ const SRC_LABEL = {
   outlook_email: "Email",
   calendar: "Calendar",
   notion: "Notion",
+  tfs: "TFS",
 };
 
 const TIER_LABEL = { now: "Now", soon: "Soon", later: "Later" };

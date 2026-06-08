@@ -28,7 +28,14 @@ def load_rules() -> dict[str, Any]:
         defaults = _read_json(config.DEFAULT_RULES_PATH)
         _atomic_write(config.RULES_PATH, defaults)
         return defaults
-    return Rules.model_validate(_read_json(config.RULES_PATH)).model_dump()
+    data = Rules.model_validate(_read_json(config.RULES_PATH)).model_dump()
+    # Backfill any per-source keys missing from older files (pydantic keeps an
+    # existing dict as-is, so a new source like "tfs" wouldn't appear otherwise).
+    defaults = Rules().model_dump()
+    for field in ("source_weights", "sources_enabled"):
+        for key, val in defaults[field].items():
+            data[field].setdefault(key, val)
+    return data
 
 
 def save_rules(payload: dict[str, Any]) -> dict[str, Any]:

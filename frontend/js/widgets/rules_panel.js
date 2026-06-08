@@ -39,8 +39,39 @@ function chips(kind, arr, keyName) {
     </div>`;
 }
 
+function srcCheck(key, label) {
+  const on = getPath(rules, "sources_enabled." + key) !== false; // default on
+  return `<label class="src-check"><input type="checkbox" data-path="sources_enabled.${key}" ${on ? "checked" : ""}/> ${label}</label>`;
+}
+
+// Generic editor for a list of strings (TFS query links, mail folder names…).
+function strList(kind, arr, emptyText, inputPlaceholder) {
+  const rows = arr
+    .map(
+      (u, i) =>
+        `<div class="qrow"><span class="qurl" title="${escapeHtml(u)}">${escapeHtml(u)}</span><button data-delstr="${kind}" data-i="${i}" title="remove">×</button></div>`
+    )
+    .join("");
+  return `
+    <div class="qlist">${rows || `<span class="item-why">${escapeHtml(emptyText)}</span>`}</div>
+    <div class="chip-add">
+      <input class="match" type="text" placeholder="${escapeHtml(inputPlaceholder)}" data-addstr-input="${kind}" />
+      <button class="btn btn--ghost" data-addstr="${kind}">Add</button>
+    </div>`;
+}
+
+function strArr(kind) {
+  return kind === "tfsq" ? rules.tfs.queries : rules.mail.folders;
+}
+
 export function open(currentRules, saveFn) {
   rules = JSON.parse(JSON.stringify(currentRules));
+  rules.tfs = rules.tfs || { queries: [], project: null };
+  rules.tfs.queries = rules.tfs.queries || [];
+  rules.mail = rules.mail || { folders: [] };
+  rules.mail.folders = rules.mail.folders || [];
+  rules.notion = rules.notion || { data_source_url: null, due_property: "Due", tags_property: "Tags" };
+  rules.sources_enabled = rules.sources_enabled || {};
   onSave = saveFn;
   build();
   document.getElementById("rules-overlay").hidden = false;
@@ -59,6 +90,17 @@ function build() {
   const body = document.getElementById("rules-body");
   body.innerHTML = `
     <div class="rules-group">
+      <h3>Sources</h3>
+      <div class="src-checks">
+        ${srcCheck("teams", "Teams")}
+        ${srcCheck("calendar", "Calendar")}
+        ${srcCheck("email", "Email")}
+        ${srcCheck("notion", "Notion")}
+        ${srcCheck("tfs", "TFS")}
+      </div>
+    </div>
+
+    <div class="rules-group">
       <h3>Workday</h3>
       <div class="field-row">
         <div><label class="field-label">Start</label><input type="time" data-path="workday.start" value="${getPath(rules, "workday.start")}"/></div>
@@ -75,6 +117,7 @@ function build() {
       ${slider("Email", "source_weights.outlook_email", 0, 2, 0.1)}
       ${slider("Calendar", "source_weights.calendar", 0, 2, 0.1)}
       ${slider("Notion", "source_weights.notion", 0, 2, 0.1)}
+      ${slider("TFS", "source_weights.tfs", 0, 2, 0.1)}
       ${slider("Base score", "base_score", 0, 60, 1)}
     </div>
 
@@ -87,9 +130,33 @@ function build() {
       ${chips("kw", rules.keywords, "match")}
     </div>
     <div class="rules-group">
+      <h3>Notion tasks</h3>
+      <label class="field-label">Tasks database / view URL (recommended — reads every open row reliably)</label>
+      <input type="text" data-path="notion.data_source_url" placeholder="paste your Notion tasks view URL…" value="${escapeHtml(getPath(rules, "notion.data_source_url") || "")}"/>
+      <div class="field-row" style="margin-top:12px">
+        <div><label class="field-label">Date / due property</label><input type="text" data-path="notion.due_property" value="${escapeHtml(getPath(rules, "notion.due_property") || "Due")}"/></div>
+        <div><label class="field-label">Tags property</label><input type="text" data-path="notion.tags_property" value="${escapeHtml(getPath(rules, "notion.tags_property") || "Tags")}"/></div>
+      </div>
+    </div>
+
+    <div class="rules-group">
       <h3>Notion tag boosts</h3>
       ${chips("tag", rules.notion_tag_boosts, "tag")}
       ${slider("Dependency boost", "notion_dependency_boost", 0, 40, 1)}
+    </div>
+
+    <div class="rules-group">
+      <h3>Mail folders</h3>
+      <label class="field-label">Only read emails from these Outlook folders (non-recursive). Leave empty to scan the mailbox.</label>
+      ${strList("mailf", rules.mail.folders, "No folders set — scanning the whole mailbox.", "folder name, e.g. Inbox")}
+    </div>
+
+    <div class="rules-group">
+      <h3>TFS queries</h3>
+      <label class="field-label">Every work item returned by these saved-query links becomes a task.</label>
+      ${strList("tfsq", rules.tfs.queries, "No queries yet — paste a TFS query link below.", "paste TFS query URL…")}
+      <label class="field-label" style="margin-top:12px">Default project (used only if a query URL omits one)</label>
+      <input type="text" data-path="tfs.project" placeholder="e.g. Backup" value="${escapeHtml((rules.tfs && rules.tfs.project) || "")}"/>
     </div>
 
     <div class="rules-group">
@@ -122,7 +189,22 @@ function build() {
 }
 
 function onBodyClick(e) {
-  const { add, del, i } = e.target.dataset;
+  const { add, del, i, addstr, delstr } = e.target.dataset;
+  if (addstr !== undefined) {
+    const input = document.querySelector(`[data-addstr-input="${addstr}"]`);
+    const val = input.value.trim();
+    if (val) {
+      strArr(addstr).push(val);
+      input.value = "";
+      build();
+    }
+    return;
+  }
+  if (delstr !== undefined) {
+    strArr(delstr).splice(Number(i), 1);
+    build();
+    return;
+  }
   if (add) {
     const matchEl = document.querySelector(`[data-add-match="${add}"]`);
     const boostEl = document.querySelector(`[data-add-boost="${add}"]`);
@@ -148,7 +230,10 @@ function arrFor(kind) {
 
 function collect() {
   document.querySelectorAll("#rules-body [data-path]").forEach((el) => {
-    const val = el.dataset.type === "num" ? Number(el.value) : el.value;
+    let val;
+    if (el.type === "checkbox") val = el.checked;
+    else if (el.dataset.type === "num") val = Number(el.value);
+    else val = el.value;
     setPath(rules, el.dataset.path, val);
   });
   return rules;

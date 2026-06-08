@@ -30,6 +30,21 @@ _TIME_FACTOR_FNS = [
 
 _INF = datetime.max.replace(tzinfo=ZoneInfo("UTC"))
 
+# Map an item's `source` to its on/off toggle key in rules.sources_enabled.
+_ITEM_SOURCE_TOGGLE = {
+    "teams": "teams",
+    "outlook_email": "email",
+    "calendar": "calendar",
+    "notion": "notion",
+    "tfs": "tfs",
+}
+
+
+def _source_enabled(item: dict[str, Any], rules: dict[str, Any]) -> bool:
+    enabled = rules.get("sources_enabled") or {}
+    key = _ITEM_SOURCE_TOGGLE.get(item.get("source"), item.get("source"))
+    return enabled.get(key, True)  # default on when unspecified
+
 
 def _tz(rules: dict[str, Any]) -> ZoneInfo:
     name = rules.get("workday", {}).get("timezone") or "UTC"
@@ -235,14 +250,28 @@ def score(
     items = [
         it
         for it in raw.get("items", [])
-        if not _is_cancelled(it) and not _is_past_meeting(it, now)
+        if _source_enabled(it, rules) and not _is_cancelled(it) and not _is_past_meeting(it, now)
     ]
     scored_all = [score_item(it, rules, now, overrides) for it in items]
     order = sorted(
         zip(items, scored_all),
         key=lambda pair: _sort_key(pair[0], pair[1]),
     )
-    ranked = [s for _, s in order]
+    # Collapse conversations: keep only the highest-priority item per Teams chat
+    # / email thread (sorted desc, so the first seen for a thread_id is the top).
+    seen_threads: set[str] = set()
+    deduped = []
+    for it, s in order:
+        tid = it.get("thread_id")
+        if tid:
+            if tid in seen_threads:
+                continue
+            seen_threads.add(tid)
+        deduped.append((it, s))
+
+    items = [it for it, _ in deduped]
+    scored_all = [s for _, s in deduped]
+    ranked = scored_all
 
     window = _workday_window(rules, now)
     meetings = _meetings(items, now)

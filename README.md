@@ -16,10 +16,12 @@ gauge, today's meeting timeline, and workload breakdown charts.
 ```
 
 * **Collector** — `claude -p` reuses your already-authenticated MCP connectors to
-  fetch and *normalize* items into `data/raw_data.json`. It does no scoring. The four
-  sources — **teams, calendar, email, notion** — are collected by separate concurrent
+  fetch and *normalize* items into `data/raw_data.json`. It does no scoring. The five
+  sources — **teams, calendar, email, notion, tfs** — are collected by separate concurrent
   runs, so today's meetings land fast even if the (slower) email search lags, and any
-  source that fails keeps its last-good items instead of blanking the dashboard.
+  source that fails keeps its last-good items instead of blanking the dashboard. Sources
+  can be toggled on/off in the rules panel; **TFS** is driven by saved-query links you add
+  to the rules (every work item a query returns becomes a task).
 * **Scoring engine** — pure Python turns `raw_data.json` + `rules.json` into a ranked
   `data/data.json`. Deterministic and unit-tested; re-runs instantly when you edit rules.
 * **Backend** — FastAPI serves the dashboard, the data, rules CRUD, and a lock-guarded

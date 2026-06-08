@@ -36,3 +36,12 @@ def test_save_rejects_invalid(temp_data):
 def test_defaults_validate_against_model():
     defaults = json.loads(config.DEFAULT_RULES_PATH.read_text())
     Rules.model_validate(defaults)  # must not raise
+
+
+def test_mail_and_tfs_config_roundtrip(temp_data):
+    rules = load_rules()
+    rules["mail"]["folders"] = ["Inbox", "Project X"]
+    rules["tfs"]["queries"] = ["https://tfs/_queries/query/abc/"]
+    saved = save_rules(rules)
+    assert saved["mail"]["folders"] == ["Inbox", "Project X"]
+    assert saved["tfs"]["queries"] == ["https://tfs/_queries/query/abc/"]

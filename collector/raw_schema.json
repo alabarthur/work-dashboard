@@ -11,13 +11,14 @@
     },
     "sources": {
       "type": "object",
-      "required": ["teams", "calendar", "email", "notion"],
+      "required": ["teams", "calendar", "email", "notion", "tfs"],
       "additionalProperties": false,
       "properties": {
         "teams": { "$ref": "#/definitions/sourceHealth" },
         "calendar": { "$ref": "#/definitions/sourceHealth" },
         "email": { "$ref": "#/definitions/sourceHealth" },
-        "notion": { "$ref": "#/definitions/sourceHealth" }
+        "notion": { "$ref": "#/definitions/sourceHealth" },
+        "tfs": { "$ref": "#/definitions/sourceHealth" }
       }
     },
     "items": {
@@ -61,7 +62,7 @@
         "id": { "type": "string" },
         "source": {
           "type": "string",
-          "enum": ["teams", "outlook_email", "calendar", "notion"]
+          "enum": ["teams", "outlook_email", "calendar", "notion", "tfs"]
         },
         "type": {
           "type": "string",
@@ -69,6 +70,7 @@
         },
         "title": { "type": "string" },
         "snippet": { "type": ["string", "null"] },
+        "thread_id": { "type": ["string", "null"] },
         "from": { "$ref": "#/definitions/person" },
         "url": { "type": ["string", "null"] },
         "created_at": { "type": ["string", "null"] },

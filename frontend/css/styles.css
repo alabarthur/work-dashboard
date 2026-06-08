@@ -215,7 +215,7 @@ html, body {
   align-items: start;
 }
 .panel--gauge { grid-area: gauge; }
-.panel--donow { grid-area: donow; }
+.panel--donow { grid-area: donow; align-self: stretch; display: flex; flex-direction: column; }
 .panel--timeline { grid-area: timeline; }
 .panel--breakdown { grid-area: breakdown; }
 
@@ -310,7 +310,7 @@ html, body {
 .gauge-foot b { font-family: "IBM Plex Mono", monospace; color: var(--ink); font-weight: 500; }
 
 /* ---------- do now list ---------- */
-.donow { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; max-height: 560px; overflow-y: auto; overflow-x: hidden; }
+.donow { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden; }
 .item {
   display: grid;
   grid-template-columns: auto 1fr auto auto;
@@ -446,6 +446,20 @@ a.tl-item:hover { transform: translateY(-1px); background: var(--item-bg-hover);
 .rules-msg { font-size: 12px; color: var(--teal); font-family: "IBM Plex Mono", monospace; }
 
 .rules-group { margin-bottom: 26px; }
+.src-checks { display: flex; flex-wrap: wrap; gap: 10px 18px; }
+.src-check {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-size: 13px; color: var(--ink-soft);
+  padding: 7px 13px; border: 1px solid var(--line); border-radius: 999px;
+  background: var(--panel); cursor: pointer; user-select: none;
+}
+.src-check input { accent-color: var(--amber); cursor: pointer; }
+.src-check:has(input:checked) { color: var(--ink); border-color: var(--amber); }
+.qlist { display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px; }
+.qrow { display: flex; align-items: center; gap: 8px; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 6px 6px 6px 11px; }
+.qurl { flex: 1; min-width: 0; font-family: "IBM Plex Mono", monospace; font-size: 11px; color: var(--ink-soft); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.qrow button { background: none; border: none; color: var(--ink-faint); cursor: pointer; font-size: 16px; line-height: 1; padding: 0 4px; }
+.qrow button:hover { color: var(--red); }
 .rules-group > h3 { font-family: "Fraunces", serif; font-size: 15px; color: var(--amber); margin: 0 0 14px; font-weight: 600; }
 .slider { margin-bottom: 16px; }
 .slider-head { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 6px; }

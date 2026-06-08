@@ -51,6 +51,18 @@ class NotionConfig(BaseModel):
     tags_property: str = "Tags"
 
 
+class TfsConfig(BaseModel):
+    # Saved-query links (or GUIDs); every work item they return becomes a task.
+    queries: list[str] = Field(default_factory=list)
+    # Fallback project when a query URL doesn't include one.
+    project: Optional[str] = None
+
+
+class MailConfig(BaseModel):
+    # Specific Outlook folders to read (non-recursive, by name). Empty = whole mailbox.
+    folders: list[str] = Field(default_factory=list)
+
+
 class Rules(BaseModel):
     """The full, validated rules document persisted to rules.json."""
 
@@ -58,8 +70,15 @@ class Rules(BaseModel):
     workday: Workday = Workday()
     refresh: Refresh = Refresh()
     base_score: float = 25
+    sources_enabled: dict[str, bool] = Field(
+        default_factory=lambda: {
+            "teams": True, "calendar": True, "email": True, "notion": True, "tfs": True
+        }
+    )
     source_weights: dict[str, float] = Field(
-        default_factory=lambda: {"teams": 1.0, "outlook_email": 0.9, "calendar": 1.2, "notion": 1.0}
+        default_factory=lambda: {
+            "teams": 1.0, "outlook_email": 0.9, "calendar": 1.2, "notion": 1.0, "tfs": 1.0
+        }
     )
     vip_people: list[Match] = Field(default_factory=list)
     keywords: list[Match] = Field(default_factory=list)
@@ -71,4 +90,6 @@ class Rules(BaseModel):
     do_now_limit: int = Field(12, ge=1, le=100)
     manual_step: float = Field(10, ge=1, le=100)
     notion: NotionConfig = NotionConfig()
+    tfs: TfsConfig = TfsConfig()
+    mail: MailConfig = MailConfig()
     reconnect_url: str = "https://claude.ai/settings/connectors"

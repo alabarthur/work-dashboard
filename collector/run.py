@@ -25,6 +25,7 @@ _SOURCE_ITEMS = {
     "calendar": {"calendar"},
     "email": {"outlook_email"},
     "notion": {"notion"},
+    "tfs": {"tfs"},
 }
 
 
