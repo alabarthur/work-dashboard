@@ -2,12 +2,13 @@
 
 from __future__ import annotations
 
+import threading
 from typing import Any
 
 from fastapi import APIRouter, Response
 from pydantic import ValidationError
 
-from app import services
+from app import lock, services
 from app.models import Rules
 from app.rules_store import load_rules, save_rules
 
@@ -49,10 +50,16 @@ def post_override(payload: dict[str, Any], response: Response) -> dict[str, Any]
 
 @router.post("/refresh")
 def post_refresh(response: Response) -> dict[str, Any]:
-    result = services.refresh(trigger="manual")
-    if result.get("status") == "already_running":
-        response.status_code = 202
-    return result
+    """Kick off a collection in the background and return immediately.
+
+    A full collection takes minutes, so we never block the request on it — the
+    frontend polls /api/status for completion. The run-lock prevents overlap.
+    """
+    response.status_code = 202
+    if lock.is_locked():
+        return {"status": "already_running"}
+    threading.Thread(target=services.refresh, args=("manual",), daemon=True).start()
+    return {"status": "started"}
 
 
 @router.get("/status")

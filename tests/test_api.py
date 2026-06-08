@@ -1,11 +1,27 @@
 """Backend integration tests over fixtures (no MCP)."""
 
+import time
+
 from fastapi.testclient import TestClient
 
 from app import config
 from app.main import app
 
 client = TestClient(app)
+
+
+def _refresh_and_wait(timeout=5.0):
+    """POST /api/refresh (now async) and wait for the background run to finish."""
+    before = client.get("/api/status").json().get("last_run_finished")
+    r = client.post("/api/refresh")
+    assert r.status_code == 202
+    deadline = time.time() + timeout
+    while time.time() < deadline:
+        s = client.get("/api/status").json()
+        if s.get("last_run_finished") and s["last_run_finished"] != before:
+            return s
+        time.sleep(0.02)
+    raise AssertionError("refresh did not complete in time")
 
 
 def test_get_data_scores_fixture(temp_data):
@@ -73,27 +89,26 @@ def test_override_invalid_payload_422(temp_data):
     assert r.status_code == 422
 
 
-def test_refresh_without_collector_rescores(temp_data):
+def test_refresh_is_async_and_runs(temp_data):
     r = client.post("/api/refresh")
-    assert r.status_code == 200
-    body = r.json()
-    assert body["status"] == "ok"
-    assert body["ok"] is True
-    # history line appended
+    assert r.status_code == 202
+    assert r.json()["status"] in {"started", "already_running"}
+    s = _refresh_and_wait()  # eventually completes in the background
+    assert s["ok"] is True
     assert config.HISTORY_PATH.exists()
 
 
 def test_history_accumulates(temp_data):
     assert client.get("/api/history").json() == []
-    client.post("/api/refresh")
-    client.post("/api/refresh")
+    _refresh_and_wait()
+    _refresh_and_wait()
     hist = client.get("/api/history").json()
     assert len(hist) == 2
     assert "now" in hist[0] and "items_total" in hist[0]
 
 
 def test_health_and_status(temp_data):
-    client.post("/api/refresh")
+    _refresh_and_wait()
     h = client.get("/api/health").json()
     assert "sources_health" in h
     assert h["running"] is False

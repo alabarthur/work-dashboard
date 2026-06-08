@@ -13,6 +13,7 @@ const CONNECTOR = { calendar: "Microsoft 365", email: "Microsoft 365", teams: "M
 let latest = null;
 let currentRules = null;
 let donowMode = "now"; // "now" (top-N) | "all" (full ranked, grouped)
+let collecting = false; // true while a manual refresh collection is in flight
 
 async function loadData() {
   try {
@@ -44,6 +45,13 @@ async function loadRules() {
 function updateStaleness() {
   const badge = document.getElementById("staleness");
   const text = document.getElementById("staleness-text");
+
+  if (collecting) {
+    badge.classList.remove("badge--fresh", "badge--stale", "badge--alert", "badge--unknown");
+    badge.classList.add("badge--stale");
+    text.textContent = "collecting…";
+    return;
+  }
   if (!latest) return;
 
   const health = latest.sources_health || {};
@@ -126,14 +134,38 @@ function tickClock() {
 
 async function refresh() {
   const btn = document.getElementById("refresh-btn");
+  if (btn.disabled) return;
+  const since = new Date().toISOString();
+  collecting = true;
   btn.classList.add("is-spinning");
   btn.disabled = true;
+  updateStaleness();
   try {
+    // Returns immediately ("started" / "already_running"); the collection runs
+    // in the background and can take a few minutes.
     await fetch("/api/refresh", { method: "POST" });
-    await loadData();
+    await waitForRun(since);
+  } catch (e) {
+    console.error("refresh failed", e);
   } finally {
+    collecting = false;
     btn.classList.remove("is-spinning");
     btn.disabled = false;
+    await loadData();
+  }
+}
+
+// Poll status until a collection finishes after `sinceIso` (or we give up).
+async function waitForRun(sinceIso, maxMs = 240_000) {
+  const deadline = Date.now() + maxMs;
+  while (Date.now() < deadline) {
+    await new Promise((r) => setTimeout(r, 3000));
+    try {
+      const s = await (await fetch("/api/status", { cache: "no-store" })).json();
+      if (s.last_run_finished && s.last_run_finished > sinceIso) return;
+    } catch {
+      /* keep polling */
+    }
   }
 }
 
