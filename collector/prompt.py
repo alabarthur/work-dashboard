@@ -59,10 +59,10 @@ def teams_prompt(rules: dict[str, Any]) -> str:
 
 def calendar_prompt(rules: dict[str, Any]) -> str:
     return (
-        f"It is {now_iso(rules)}. Using the Microsoft 365 connector tool "
-        "outlook_calendar_search, get TODAY's meetings only. "
-        "EXCLUDE cancelled meetings (skip any event whose title starts with 'Canceled'/'Cancelled' "
-        "or that is marked cancelled). "
+        f"It is {now_iso(rules)}. Call outlook_calendar_search ONCE for TODAY's meetings only. "
+        "Use only the fields in the search results (subject, start, end, organizer, response) — do "
+        "NOT open event details, read bodies, or list attendees. "
+        "EXCLUDE cancelled meetings (skip any event whose title starts with 'Canceled'/'Cancelled'). "
         'For each remaining meeting, emit a normalized item with source="calendar", type="meeting", '
         'and fill the "meeting" object {start,end,is_organizer,response}. '
         f"Shape: {ITEM_SHAPE}. {_RULES}"
@@ -74,9 +74,11 @@ def email_prompt(rules: dict[str, Any]) -> str:
     if folders:
         folder_list = ", ".join(f'"{f}"' for f in folders)
         scope = (
-            "Search ONLY these specific mail folders (non-recursively) — make a SEPARATE "
-            f"outlook_email_search call for each, passing folderName: {folder_list}. "
-            "For each folder use order='newest', limit=15. Do NOT search any other folder."
+            "Search ONLY these specific mail folders (non-recursively) — make ONE "
+            f"outlook_email_search call for each (no pagination), passing folderName: {folder_list}. "
+            "For each folder use order='newest', limit=8. Do NOT search any other folder. "
+            "Use ONLY the search metadata (subject, sender, received date, flags) — do NOT open "
+            "messages or read their bodies."
         )
     else:
         scope = (
@@ -135,17 +137,18 @@ def notion_prompt(rules: dict[str, Any]) -> str:
 
     return (
         f"It is {now_iso(rules)}. Enumerate the user's open Notion tasks using this exact method:\n"
-        f"1. {find}. The result is a database — read its data source id from the "
-        '<data-source url="collection://..."> tag.\n'
+        f"1. {find} — but ONLY to read its data source id from the <data-source url=\"collection://...\"> "
+        "tag. Do NOT read or summarize the database's page content.\n"
         "2. Call notion-search with data_source_url set to that collection:// id, "
         'query="open active task to do", page_size=25, max_highlight_length=0. This lists the '
-        "task pages in that database.\n"
-        "3. If a returned task's fields aren't in the results, notion-fetch it for details.\n"
+        "task pages with their properties.\n"
+        "3. Normalize STRICTLY from those search results. Do NOT notion-fetch individual task pages "
+        "(that is far too expensive). If a property is missing from the search result, set it to null.\n"
         "Include ALL returned tasks whose Status is NOT Done / Completed / Archived / Cancelled. "
         "Do NOT filter by date.\n"
         'For each, emit a normalized item: source="notion", type="task", '
-        f"title = the task name, due_at = the '{due_prop}' property if it has one else null, "
-        f"tags = the '{tags_prop}' property plus the Status, "
-        "has_dependency = true if it has Blocking/Blocked-by relations, url = the page URL. "
+        f"title = the task name, due_at = the '{due_prop}' property if present else null, "
+        f"tags = the '{tags_prop}' property plus the Status, has_dependency = false, "
+        "url = the page URL. "
         f"Shape: {ITEM_SHAPE}. {_RULES}"
     )
