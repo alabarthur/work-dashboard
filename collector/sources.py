@@ -79,6 +79,7 @@ def collect_source(
 ) -> tuple[dict[str, Any], list[dict[str, Any]]]:
     """Run one source. Returns (health, items). Never raises — failures become health."""
     runner = runner or claude_runner.run_claude
+    usage = {"input_tokens": 0, "output_tokens": 0, "cost_usd": 0.0}
     try:
         stdout = runner(
             spec.build_prompt(rules),
@@ -87,14 +88,14 @@ def collect_source(
             spec.strict,
             SOURCE_TIMEOUT,
         )
-        usage = claude_runner.extract_usage(stdout)
+        usage = claude_runner.extract_usage(stdout)  # capture even if parsing fails below
         result = claude_runner.extract_json(stdout)
         if not result.get("ok", False):
             reason = str(result.get("error") or "source_error")[:60]
             return {"ok": False, "error": reason, "usage": usage}, []
         return {"ok": True, "error": None, "usage": usage}, list(result.get("items", []))
     except Exception as exc:
-        return {"ok": False, "error": _classify_error(exc)}, []
+        return {"ok": False, "error": _classify_error(exc), "usage": usage}, []
 
 
 def collect_all(

@@ -52,8 +52,8 @@ def teams_prompt(rules: dict[str, Any]) -> str:
         "    • 1:1 DM → just the sender's name, e.g. \"Dmitriy Lutsenko\". Do NOT write 'group chat'.\n"
         '    • group chat → "<sender> in group chat — <first ~6 words of the message>".\n'
         '    • channel mention → "<sender> in <channel/team name>".\n'
-        '- url MUST be the message\'s clickable web permalink (webUrl) so the user can open the '
-        "chat; if no message link is available, use the chat/channel link. Do not leave url null.\n"
+        "- url = the message's webUrl if present, else the chat/channel link, else null. Do NOT "
+        "drop a message or fail the source just because a url is missing.\n"
         '- snippet = the message text preview. Put the sender in "from".\n'
         '- thread_id = the chat/conversation id, so messages from the SAME chat share it.\n'
         f"Normalized item shape: {ITEM_SHAPE}. {_RULES}"

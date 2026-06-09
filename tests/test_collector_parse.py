@@ -156,6 +156,16 @@ def test_collect_source_attaches_usage():
     assert health["usage"] == {"input_tokens": 100, "output_tokens": 20, "cost_usd": 0.05}
 
 
+def test_failed_source_still_reports_usage():
+    # Malformed result JSON (truncated) → JSONDecodeError, but usage must survive.
+    def runner(prompt, allowed_tools, mcp_config=None, strict=False, timeout=0):
+        return json.dumps({"type": "result", "result": "{ truncated...",
+                           "total_cost_usd": 0.33, "usage": {"input_tokens": 90000, "output_tokens": 5000}})
+    health, items = sources.collect_source(sources.SPECS[0], DEFAULT_RULES, runner=runner)
+    assert health["ok"] is False and items == []
+    assert health["usage"]["cost_usd"] == 0.33      # cost no longer lost on failure
+
+
 def test_classify_error_codes():
     import subprocess as sp
     assert sources._classify_error(sp.TimeoutExpired("claude", 1)) == "timeout"

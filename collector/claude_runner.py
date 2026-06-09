@@ -41,7 +41,10 @@ def build_command(
     cmd += [
         "--allowedTools", allowed_tools,
         "--permission-mode", "dontAsk",
-        "--max-budget-usd", "0.40",
+        # Safety rail per source. Set high enough that the heaviest source
+        # (Notion, which fetches task pages) doesn't get truncated mid-output
+        # — truncation produced JSONDecodeErrors and endless retries.
+        "--max-budget-usd", "0.85",
     ]
     return cmd
 
