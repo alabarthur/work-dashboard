@@ -33,7 +33,7 @@ def build_command(
     mcp_config: Optional[str] = None,
     strict: bool = False,
 ) -> list[str]:
-    cmd = [config.CLAUDE_BIN, "-p", prompt, "--output-format", "json"]
+    cmd = [config.CLAUDE_BIN, "-p", prompt, "--output-format", "json", "--model", config.CLAUDE_MODEL]
     if mcp_config:
         cmd += ["--mcp-config", mcp_config]
     if strict:

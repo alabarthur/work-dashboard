@@ -27,6 +27,12 @@ RAW_SCHEMA_PATH = COLLECTOR_DIR / "raw_schema.json"
 # Path to the claude CLI used by the collector (overridable for tests/launchd).
 CLAUDE_BIN = os.environ.get("WORKTABLE_CLAUDE_BIN", "/opt/homebrew/bin/claude")
 
+# Model for the headless collector. "sonnet" balances speed/cost against the
+# reliability needed for the multi-step tool work (Notion enumeration, TFS
+# query→batch, normalization). Set WORKTABLE_CLAUDE_MODEL=haiku to go faster/
+# cheaper, or to a full id like "claude-sonnet-4-6".
+CLAUDE_MODEL = os.environ.get("WORKTABLE_CLAUDE_MODEL", "sonnet")
+
 PORT = int(os.environ.get("WORKTABLE_PORT", "8787"))
 
 
