@@ -145,12 +145,11 @@ def notion_prompt(rules: dict[str, Any]) -> str:
         "2. Call notion-search with data_source_url set to that collection:// id, "
         'query="open active task to do", page_size=25, max_highlight_length=0. This lists the '
         "task pages with their properties.\n"
-        "3. Normalize STRICTLY from those search results. Do NOT notion-fetch individual task pages "
-        "(that is far too expensive).\n"
-        "FILTER (important): include a task ONLY if it has a Status property AND that Status is an "
-        "active state (e.g. To Do, Doing, In Progress, Blocked). SKIP any task whose Status is "
-        "Done / Completed / Archived / Cancelled, AND SKIP any task that has no visible Status. "
-        "Do NOT guess a Status, and do NOT filter by date.\n"
+        f"3. For each returned task read its Status and its '{due_prop}' date. The search results "
+        "usually do NOT include these properties, so notion-fetch the task page to read them.\n"
+        "FILTER (important): include a task ONLY if its Status is an active state (To Do, Doing, "
+        "In Progress, Blocked, etc.). SKIP any task whose Status is Done / Completed / Archived / "
+        "Cancelled. Do NOT filter by date.\n"
         'For each, emit a normalized item: source="notion", type="task", '
         f"title = the task name, due_at = the '{due_prop}' property if present else null, "
         f"tags = the '{tags_prop}' property plus the Status, has_dependency = false, "
