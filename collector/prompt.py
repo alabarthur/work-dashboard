@@ -107,15 +107,18 @@ def tfs_prompt(rules: dict[str, Any]) -> str:
         "from the URL (these URLs contain '/<project>/_queries/query/<guid>/'). "
         f"{proj_hint}\n"
         "Steps per query: call get_query_results(query_id=<guid>, project=<project>, limit=30) to "
-        "get work item ids, then get_work_items_batch(ids, project, expand='Relations') for details. "
+        "get work item ids, then get_work_items_batch with fields=[\"System.Title\",\"System.State\","
+        "\"System.WorkItemType\",\"System.AssignedTo\",\"System.Tags\"] — request ONLY those fields and "
+        "do NOT use expand (it pulls far too much). "
         "Queries:\n"
         f"{query_lines}\n"
         'Normalize each work item: source="tfs", type="task", id="tfs:<work item id>", '
-        'title=the work item title, snippet="<Work Item Type> · <State>", '
-        'from = the AssignedTo person, url = the work item web URL, due_at = null, '
-        "tags = [the Work Item Type, the State, plus any tags], "
-        "has_dependency = true if it has child/related/predecessor links. "
-        "Skip removed/closed-done items if obvious. Cap at ~30 items total across all queries. "
+        'title=System.Title, snippet="<System.WorkItemType> · <System.State>", '
+        "from = System.AssignedTo, due_at = null, has_dependency = false, "
+        "tags = [System.WorkItemType, System.State, plus any System.Tags], "
+        'url = the work item link built from the query URL host as '
+        '"<scheme>://<host>/<collection>/<project>/_workitems/edit/<id>". '
+        "Skip Removed / Closed-Done items. Cap at ~30 items total across all queries. "
         f"Shape: {ITEM_SHAPE}. {_RULES}"
     )
 
