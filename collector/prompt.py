@@ -42,13 +42,16 @@ def teams_prompt(rules: dict[str, Any]) -> str:
         f"It is {now_iso(rules)}. Using the Microsoft 365 connector tool "
         "chat_message_search, find up to 15 recent (last 48h) Microsoft Teams "
         "@mentions and direct/1:1 messages that are awaiting your reply. "
-        'For each, emit a normalized item with source="teams", type="mention" or "dm". '
+        'For each, emit a normalized item with source="teams". '
         "Requirements for each item:\n"
-        "- title: identify the conversation in HUMAN terms and NEVER put a raw chat id or GUID "
-        "in it. Use the channel/team name for a channel mention; for a 1:1 use the sender's name; "
-        "for a group chat (these are usually unnamed) use the chat's name if it has one, otherwise "
-        '"<sender> in group chat — <first ~6 words of the message>". '
-        "Keep it short and meaningful.\n"
+        "- Determine the chat kind from the chatId: ids ending '@unq.gbl.spaces' (or containing two "
+        "user ids joined by '_') are 1:1 DIRECT chats; ids ending '@thread.v2' are GROUP chats; "
+        "'meeting_' marks a meeting chat.\n"
+        '- type = "dm" for a 1:1 direct chat, otherwise "mention".\n'
+        "- title (NEVER include a raw chat id or GUID):\n"
+        "    • 1:1 DM → just the sender's name, e.g. \"Dmitriy Lutsenko\". Do NOT write 'group chat'.\n"
+        '    • group chat → "<sender> in group chat — <first ~6 words of the message>".\n'
+        '    • channel mention → "<sender> in <channel/team name>".\n'
         '- url MUST be the message\'s clickable web permalink (webUrl) so the user can open the '
         "chat; if no message link is available, use the chat/channel link. Do not leave url null.\n"
         '- snippet = the message text preview. Put the sender in "from".\n'
