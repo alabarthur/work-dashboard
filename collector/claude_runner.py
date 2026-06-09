@@ -92,6 +92,29 @@ def extract_json(stdout: str) -> dict[str, Any]:
 extract_raw = extract_json
 
 
+def extract_usage(stdout: str) -> dict[str, Any]:
+    """Pull token usage + cost from the `--output-format json` envelope.
+
+    Returns zeros when the envelope has no usage (e.g. a mocked runner in tests).
+    """
+    zero = {"input_tokens": 0, "output_tokens": 0, "cost_usd": 0.0}
+    try:
+        env = json.loads(stdout.strip())
+    except (json.JSONDecodeError, AttributeError):
+        return dict(zero)
+    if not isinstance(env, dict):
+        return dict(zero)
+    u = env.get("usage") or {}
+    inp = (u.get("input_tokens") or 0) + (u.get("cache_creation_input_tokens") or 0) + (
+        u.get("cache_read_input_tokens") or 0
+    )
+    return {
+        "input_tokens": int(inp),
+        "output_tokens": int(u.get("output_tokens") or 0),
+        "cost_usd": round(float(env.get("total_cost_usd") or 0.0), 4),
+    }
+
+
 def _strip_fences(text: str) -> str:
     text = text.strip()
     if text.startswith("```"):

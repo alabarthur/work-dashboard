@@ -220,6 +220,19 @@ def _is_past_meeting(item: dict[str, Any], now: datetime) -> bool:
     return ref is not None and ref <= now
 
 
+def _total_usage(raw: dict[str, Any]) -> dict[str, Any]:
+    """Sum per-source collector token usage + cost for this collection."""
+    total = {"input_tokens": 0, "output_tokens": 0, "cost_usd": 0.0}
+    for health in (raw.get("sources") or {}).values():
+        u = (health or {}).get("usage") or {}
+        total["input_tokens"] += u.get("input_tokens", 0) or 0
+        total["output_tokens"] += u.get("output_tokens", 0) or 0
+        total["cost_usd"] += u.get("cost_usd", 0.0) or 0.0
+    total["cost_usd"] = round(total["cost_usd"], 4)
+    total["total_tokens"] = total["input_tokens"] + total["output_tokens"]
+    return total
+
+
 def _sources_health(raw: dict[str, Any]) -> dict[str, str]:
     health = {}
     for key, info in (raw.get("sources") or {}).items():
@@ -284,6 +297,7 @@ def score(
         "raw_collected_at": collected_at,
         "stale": stale,
         "sources_health": _sources_health(raw),
+        "usage": _total_usage(raw),
         "ranked": ranked,
         "do_now_limit": int(rules.get("do_now_limit", 12)),
         "meetings": meetings,

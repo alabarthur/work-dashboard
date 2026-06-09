@@ -40,6 +40,40 @@ function sparkline(history) {
     </div>`;
 }
 
+function fmtTokens(n) {
+  return n >= 1000 ? (n / 1000).toFixed(1) + "k" : String(n || 0);
+}
+function fmtCost(c) {
+  c = c || 0;
+  return "$" + (c >= 0.1 ? c.toFixed(2) : c.toFixed(3));
+}
+
+function collectorBlock(data, history) {
+  const u = data.usage || {};
+  const today = new Date().toDateString();
+  let dayCost = 0, dayRuns = 0;
+  (history || []).forEach((h) => {
+    if (h.ts && new Date(h.ts).toDateString() === today && (h.cost_usd || h.total_tokens)) {
+      dayCost += h.cost_usd || 0;
+      dayRuns += 1;
+    }
+  });
+  return `
+    <div class="bd-block">
+      <h3>Collector cost</h3>
+      <div class="bd-stats">
+        <div class="bd-stat">
+          <div class="bd-stat-num">${fmtCost(u.cost_usd)}</div>
+          <div class="bd-stat-label">this run · ${fmtTokens(u.total_tokens)} tok</div>
+        </div>
+        <div class="bd-stat">
+          <div class="bd-stat-num">${fmtCost(dayCost)}</div>
+          <div class="bd-stat-label">today · ${dayRuns} run${dayRuns === 1 ? "" : "s"}</div>
+        </div>
+      </div>
+    </div>`;
+}
+
 export function render(data, history) {
   const el = document.getElementById("breakdown");
   const bd = data.breakdown || {};
@@ -74,5 +108,6 @@ export function render(data, history) {
         </div>
       </div>
     </div>
+    ${collectorBlock(data, history)}
     ${sparkline(history)}`;
 }

@@ -93,6 +93,7 @@ def _append_history(data: dict[str, Any]) -> None:
     bd = data.get("breakdown", {})
     tiers = bd.get("by_tier", {})
     tasks = bd.get("tasks", {})
+    usage = data.get("usage", {})
     line = {
         "ts": data.get("generated_at"),
         "now": tiers.get("now", 0),
@@ -101,6 +102,8 @@ def _append_history(data: dict[str, Any]) -> None:
         "overdue": tasks.get("overdue", 0),
         "due_today": tasks.get("due_today", 0),
         "items_total": len(data.get("ranked", [])),
+        "cost_usd": usage.get("cost_usd", 0.0),
+        "total_tokens": usage.get("total_tokens", 0),
     }
     config.ensure_data_dir()
     with open(config.HISTORY_PATH, "a") as fh:

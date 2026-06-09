@@ -87,11 +87,12 @@ def collect_source(
             spec.strict,
             SOURCE_TIMEOUT,
         )
+        usage = claude_runner.extract_usage(stdout)
         result = claude_runner.extract_json(stdout)
         if not result.get("ok", False):
             reason = str(result.get("error") or "source_error")[:60]
-            return {"ok": False, "error": reason}, []
-        return {"ok": True, "error": None}, list(result.get("items", []))
+            return {"ok": False, "error": reason, "usage": usage}, []
+        return {"ok": True, "error": None, "usage": usage}, list(result.get("items", []))
     except Exception as exc:
         return {"ok": False, "error": _classify_error(exc)}, []
 

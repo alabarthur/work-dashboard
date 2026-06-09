@@ -33,7 +33,16 @@
       "additionalProperties": false,
       "properties": {
         "ok": { "type": "boolean" },
-        "error": { "type": ["string", "null"] }
+        "error": { "type": ["string", "null"] },
+        "usage": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "input_tokens": { "type": "number" },
+            "output_tokens": { "type": "number" },
+            "cost_usd": { "type": "number" }
+          }
+        }
       }
     },
     "person": {

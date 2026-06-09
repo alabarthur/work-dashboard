@@ -131,6 +131,31 @@ def test_source_reporting_not_ok_yields_no_items():
     assert health["ok"] is False and items == []
 
 
+def test_extract_usage_from_envelope():
+    env = json.dumps({
+        "type": "result", "result": "{}", "total_cost_usd": 0.0734,
+        "usage": {"input_tokens": 12, "cache_creation_input_tokens": 1400,
+                  "cache_read_input_tokens": 600, "output_tokens": 210},
+    })
+    u = claude_runner.extract_usage(env)
+    assert u["input_tokens"] == 2012      # 12 + 1400 + 600
+    assert u["output_tokens"] == 210
+    assert u["cost_usd"] == 0.0734
+
+
+def test_extract_usage_missing_is_zero():
+    u = claude_runner.extract_usage(json.dumps({"type": "result", "result": "{}"}))
+    assert u == {"input_tokens": 0, "output_tokens": 0, "cost_usd": 0.0}
+
+
+def test_collect_source_attaches_usage():
+    def runner(prompt, allowed_tools, mcp_config=None, strict=False, timeout=0):
+        return json.dumps({"type": "result", "result": json.dumps({"ok": True, "items": []}),
+                           "total_cost_usd": 0.05, "usage": {"input_tokens": 100, "output_tokens": 20}})
+    health, _ = sources.collect_source(sources.SPECS[0], DEFAULT_RULES, runner=runner)
+    assert health["usage"] == {"input_tokens": 100, "output_tokens": 20, "cost_usd": 0.05}
+
+
 def test_classify_error_codes():
     import subprocess as sp
     assert sources._classify_error(sp.TimeoutExpired("claude", 1)) == "timeout"

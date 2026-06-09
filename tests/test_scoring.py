@@ -248,6 +248,25 @@ def test_manual_override_can_demote(raw, rules):
     assert "manual -60" in demoted["notion:task:abc100"]["why"]
 
 
+def test_usage_totaled_in_output(rules):
+    raw = {
+        "collected_at": "2026-06-08T13:00:00+02:00",
+        "sources": {
+            "teams": {"ok": True, "error": None, "usage": {"input_tokens": 1000, "output_tokens": 100, "cost_usd": 0.02}},
+            "calendar": {"ok": True, "error": None, "usage": {"input_tokens": 500, "output_tokens": 50, "cost_usd": 0.01}},
+            "email": {"ok": True, "error": None},
+            "notion": {"ok": True, "error": None, "usage": {"input_tokens": 2000, "output_tokens": 200, "cost_usd": 0.05}},
+            "tfs": {"ok": True, "error": None},
+        },
+        "items": [],
+    }
+    u = engine.score(raw, rules, now=NOW)["usage"]
+    assert u["input_tokens"] == 3500
+    assert u["output_tokens"] == 350
+    assert u["cost_usd"] == 0.08
+    assert u["total_tokens"] == 3850
+
+
 def test_stale_detection(raw, rules):
     later = datetime(2026, 6, 8, 13, 30, tzinfo=ZoneInfo("Europe/Prague"))
     assert engine.score(raw, rules, now=later)["stale"] is True
