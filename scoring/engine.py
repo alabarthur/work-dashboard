@@ -211,6 +211,16 @@ def _is_cancelled(item: dict[str, Any]) -> bool:
     return title.startswith("canceled") or title.startswith("cancelled")
 
 
+_DONE_STATES = {"done", "completed", "complete", "archived", "cancelled", "canceled", "closed"}
+
+
+def _is_done_notion(item: dict[str, Any]) -> bool:
+    """Drop Notion tasks whose Status (carried in tags) is a finished state."""
+    if item.get("source") != "notion":
+        return False
+    return any(str(t).strip().lower() in _DONE_STATES for t in (item.get("tags") or []))
+
+
 def _is_past_meeting(item: dict[str, Any], now: datetime) -> bool:
     """A meeting that has already ended (in-progress meetings are kept)."""
     if item.get("type") != "meeting":
@@ -263,7 +273,10 @@ def score(
     items = [
         it
         for it in raw.get("items", [])
-        if _source_enabled(it, rules) and not _is_cancelled(it) and not _is_past_meeting(it, now)
+        if _source_enabled(it, rules)
+        and not _is_cancelled(it)
+        and not _is_past_meeting(it, now)
+        and not _is_done_notion(it)
     ]
     scored_all = [score_item(it, rules, now, overrides) for it in items]
     order = sorted(

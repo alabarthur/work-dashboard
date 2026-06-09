@@ -200,6 +200,23 @@ def test_items_without_thread_id_not_deduped(raw, rules):
     assert len(notion_ids) == 3
 
 
+def test_done_notion_tasks_dropped(rules):
+    raw = {
+        "collected_at": "2026-06-08T13:00:00+02:00",
+        "sources": {k: {"ok": True, "error": None} for k in ("teams", "calendar", "email", "notion", "tfs")},
+        "items": [
+            {"id": "notion:active", "source": "notion", "type": "task", "title": "Active task",
+             "tags": ["Doing"], "has_dependency": False},
+            {"id": "notion:done", "source": "notion", "type": "task", "title": "Finished task",
+             "tags": ["Done"], "has_dependency": False},
+            {"id": "notion:archived", "source": "notion", "type": "task", "title": "Old task",
+             "tags": ["P1", "Archived"], "has_dependency": False},
+        ],
+    }
+    ids = {r["id"] for r in engine.score(raw, rules, now=NOW)["ranked"]}
+    assert ids == {"notion:active"}
+
+
 def test_tfs_item_scores_base_only(rules):
     raw = {
         "collected_at": "2026-06-08T13:00:00+02:00",
