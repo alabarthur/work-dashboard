@@ -132,6 +132,28 @@ def _strip_fences(text: str) -> str:
     return text
 
 
+def _sanitize_item(it: dict[str, Any]) -> dict[str, Any]:
+    """Coerce common LLM quirks so a minor deviation doesn't drop a good item."""
+    if it.get("from") is None:
+        it["from"] = {"name": None, "email": None}
+    if not isinstance(it.get("tags"), list):
+        it["tags"] = []
+    if "has_dependency" in it and not isinstance(it["has_dependency"], bool):
+        it["has_dependency"] = bool(it["has_dependency"])
+    return it
+
+
 def validate_raw(raw: dict[str, Any]) -> None:
+    """Validate raw_data, dropping any individually-invalid item rather than
+    failing the whole collection (one bad item used to blank everything)."""
     schema = json.loads(Path(config.RAW_SCHEMA_PATH).read_text())
-    jsonschema.validate(raw, schema)
+    item_validator = jsonschema.Draft7Validator(
+        {"definitions": schema["definitions"], "$ref": "#/definitions/item"}
+    )
+    good = []
+    for it in raw.get("items", []):
+        _sanitize_item(it)
+        if item_validator.is_valid(it):
+            good.append(it)
+    raw["items"] = good
+    jsonschema.validate(raw, schema)  # top-level (sources etc.) — we control this

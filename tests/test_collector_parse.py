@@ -131,6 +131,22 @@ def test_source_reporting_not_ok_yields_no_items():
     assert health["ok"] is False and items == []
 
 
+def test_validate_raw_drops_bad_item_not_whole_batch():
+    raw = {
+        "collected_at": "2026-06-09T10:00:00+02:00",
+        "sources": {k: {"ok": True, "error": None} for k in ("teams", "calendar", "email", "notion", "tfs")},
+        "items": [
+            {"id": "ok1", "source": "teams", "type": "dm", "title": "good", "from": None},  # from=null → coerced
+            {"id": "bad", "source": "teams", "type": "WRONG", "title": "bad enum"},          # invalid → dropped
+            {"id": "ok2", "source": "notion", "type": "task", "title": "fine"},
+        ],
+    }
+    claude_runner.validate_raw(raw)  # must not raise
+    ids = [i["id"] for i in raw["items"]]
+    assert ids == ["ok1", "ok2"]                 # bad item dropped, others kept
+    assert raw["items"][0]["from"] == {"name": None, "email": None}  # null coerced
+
+
 def test_extract_usage_from_envelope():
     env = json.dumps({
         "type": "result", "result": "{}", "total_cost_usd": 0.0734,
